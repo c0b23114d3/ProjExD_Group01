@@ -173,6 +173,11 @@ def main():
 
         block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
 
+        for block in pg.sprite.spritecollide(bird, block, True):
+            bird.change_img(8, screen) #こうかとん悲しみエフェクト
+            pg.display.update()
+            time.sleep(2)
+            return
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
