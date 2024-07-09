@@ -95,6 +95,7 @@ class Bird(pg.sprite.Sprite):
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+                
         self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
@@ -124,6 +125,24 @@ class Stumbling_block(pg.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
 
+class Enemy(pg.sprite.Sprite):
+    """
+    敵機に関するクラス
+    """
+    imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)]
+
+    def __init__(self):
+        super().__init__()
+        self.image = random.choice(__class__.imgs)
+        self.rect = self.image.get_rect()
+        self.rect.center = random.randint(WIDTH + 20, WIDTH + 100), random.randint(0, HEIGHT)
+            
+        self.speed = random.randint(3, 10)
+    
+    def update(self):
+        self.rect.move_ip(-self.speed, 0)
+        if self.rect.right < 0:
+            self.kill()
 # class Explosion(pg.sprite.Sprite):
 #     """
 #     爆発に関するクラス
@@ -160,8 +179,8 @@ def main():
 
     bird = Bird(3, (900, 400))
     block = pg.sprite.Group()
+    emys = pg.sprite.Group()
     # exps = pg.sprite.Group()
-
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -170,14 +189,23 @@ def main():
             if event.type == pg.QUIT:
                 return 0
         screen.blit(bg_img, [0, 0])
-
+        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
         block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
 
         for block in pg.sprite.spritecollide(bird, block, True):
+
             bird.change_img(8, screen) #こうかとん悲しみエフェクト
             pg.display.update()
             time.sleep(2)
             return
+        for emys in pg.sprite.spritecollide(bird, emys, True):
+
+            bird.change_img(8, screen) #こうかとん悲しみエフェクト
+            pg.display.update()
+            time.sleep(2)
+            return
+
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -198,6 +226,8 @@ def main():
         bird.update(key_lst, screen)
         block.update(screen)
         block.draw(screen)
+        emys.update()
+        emys.draw(screen)
         # exps.update()
         # exps.draw(screen)
         pg.display.update()
