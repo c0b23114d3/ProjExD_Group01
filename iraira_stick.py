@@ -157,13 +157,13 @@ def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
-
     bird = Bird(3, (900, 400))
     block = pg.sprite.Group()
     # exps = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
+    game_now = True
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -172,6 +172,14 @@ def main():
         screen.blit(bg_img, [0, 0])
 
         block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
+
+        if len(pg.sprite.spritecollide(bird, block, True)) != 0:#失敗時
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            pg.display.update()
+            time.sleep(2)
+            game_now = False
+            return
+        
 
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
