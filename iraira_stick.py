@@ -57,7 +57,7 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.0)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -83,6 +83,12 @@ class Bird(pg.sprite.Sprite):
         """
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
+
+    def change_explosion(self, num: int, screen: pg.Surface, life: int):
+        self.img = pg.image.load(f"fig/explosion.gif")
+        self.timg = pg.transform.flip(self.img, False, True)
+        screen.blit(self.img, self.rect)
+        screen.blit(self.timg, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -123,6 +129,67 @@ class Stumbling_block(pg.sprite.Sprite):
     def update(self, screen: pg.Surface):
         screen.blit(self.image, self.rect)
 
+class Gimmick_explosion(pg.sprite.Sprite):
+    """
+    地雷を生成するクラス
+    """
+
+    def __init__(self, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.Surface((50, 50))
+        pg.draw.circle(self.image, (232, 143, 186), (25, 25), 20)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self, screen: pg.Surface):
+        screen.blit(self.image, self.rect)
+
+class Gimmick_burnar_base(pg.sprite.Sprite):
+    """
+    バーナーを設置するための土台を生成するクラス    
+    """
+
+    def __init__(self, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.Surface((50, 50))
+        pg.draw.circle(self.image, (0, 0, 255), (25, 25), 20)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+    
+    def update(self, screen: pg.Surface):
+        screen.blit(self.image, self.rect)
+
+class Gimmick_burnar_main(pg.sprite.Sprite):
+    """
+    バーナーを生成するクラス
+    """
+
+    def __init__(self, z: int, xy: tuple[int, int]):
+        super().__init__()
+        self.img = pg.image.load(f"fig/beam.png")
+        self.size = 1.5
+        if z == 0:
+            self.image = pg.transform.rotozoom(self.img, -90, self.size)
+            # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
+            # 上方向の描画
+        elif z == 1:
+            self.image = pg.transform.rotozoom(self.img, 0, self.size)
+            # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
+            # 左方向の描画
+        elif z == 2:
+            self.image = pg.transform.rotozoom(self.img, 90, self.size)
+            # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
+            # 下方向の描画
+        elif z == 3:
+            self.image = pg.transform.rotozoom(self.img, 180, self.size)
+            # gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3)))
+            # 右方向の描画
+        
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self, screen: pg.Surface):
+        screen.blit(self.image, self.rect)
 
 # class Explosion(pg.sprite.Sprite):
 #     """
@@ -160,10 +227,19 @@ def main():
 
     bird = Bird(3, (900, 400))
     block = pg.sprite.Group()
+
+    gimmicks_ex = pg.sprite.Group()
+    gimmicks_bb = pg.sprite.Group()
+    gimmicks_bm = pg.sprite.Group()
+
     # exps = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
+
+    burnar_interval = 50  # バーナーが出現するまでの時間
+    burnar_time = 50  # バーナーを出現させる時間
+
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -173,6 +249,29 @@ def main():
 
         block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
 
+        gimmicks_ex.add(Gimmick_explosion((WIDTH / 2, HEIGHT / 2)))
+        gimmicks_bb.add(Gimmick_burnar_base((WIDTH / 3, HEIGHT / 3)))
+
+        # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
+        # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
+        # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
+        gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3)))        
+
+        if len(pg.sprite.spritecollide(bird, gimmicks_ex, True)) != 0:
+            bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
+            pg.display.update()
+            time.sleep(2)
+            return
+        
+        if burnar_interval < 0:
+            """
+            bunar_intervalが0未満の場合に衝突判定をする
+            """
+            if len(pg.sprite.spritecollide(bird, gimmicks_bm, True)) != 0:
+                bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
+                pg.display.update()
+                time.sleep(2)
+                return
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -193,6 +292,22 @@ def main():
         bird.update(key_lst, screen)
         block.update(screen)
         block.draw(screen)
+
+        gimmicks_ex.update(screen)
+        gimmicks_ex.draw(screen)
+        gimmicks_bb.update(screen)
+        gimmicks_bb.draw(screen)
+        
+        burnar_interval -= 1
+        if burnar_interval < 0: 
+            gimmicks_bm.update(screen)
+            gimmicks_bm.draw(screen)
+            burnar_time -= 1
+            if burnar_time <= 0:
+                burnar_interval = random.randint(30, 50)
+                burnar_time = random.randint(30, 50)
+                continue
+
         # exps.update()
         # exps.draw(screen)
         pg.display.update()
