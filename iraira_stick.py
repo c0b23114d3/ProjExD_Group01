@@ -8,9 +8,49 @@ import time
 import pygame as pg
 
 
+
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+titel_screen = pg.display.set_mode((WIDTH,HEIGHT))
+pg.display.set_caption("イライラスティック")
+
+title_font = pg.font.SysFont(None,64) #タイトルのフォントサイズ
+text_font = pg.font.SysFont(None,36)  #システムのフォントサイズ
+
+title_text = title_font.render("iraira stick",True, (255,255,255)) #タイトルのテキスト
+start_text = text_font.render('Enter start' ,True,(255,255,255))   #始める時のテキスト
+end_text = text_font.render('Esc end',True,(255,255,255))          #終わるときのテキスト
+
+#タイトル画面のループ
+start = True
+while start:
+    for botan in pg.event.get():
+        if botan.type == pg.QUIT:
+            pg.quit()
+            sys.exit()
+        elif botan.type == pg.KEYDOWN:
+            if botan.key == pg.K_RETURN:#enterでゲーム開始
+                start = False
+            elif botan.key == pg.K_ESCAPE:#escでゲーム終了
+                pg.quit()
+                sys.exit()
+    
+    titel_screen.fill((101,187,233))#タイトルの背景の色
+    titel_screen.blit(title_text,(WIDTH//2 - title_text.get_width()//2,100))#タイトルの描写
+    titel_screen.blit(start_text,(WIDTH//2 - start_text.get_width()//2,300))#始める時のテキストの描写
+    titel_screen.blit(end_text,(WIDTH//2 - end_text.get_width()//2,350))    #終わる時のテキストの描写
+    pg.display.flip()#画面の更新
+
+
+
+    
+
+
+
+
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -57,7 +97,7 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.5)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -84,6 +124,10 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
 
+    def change_explosion(self, num: int, screen: pg.Surface, life: int):
+        self.img = pg.image.load(f"fig/explosion.gif")
+        screen.blit(self.img, self.rect)
+
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
         押下キーに応じてこうかとんを移動させる
@@ -104,24 +148,26 @@ class Bird(pg.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
 
-class Stumbling_block(pg.sprite.Sprite):
+class Stumbling_lock_block(pg.sprite.Sprite):
     """
-    障害物を生成するクラス
+    固定された障害物を生成するクラス
     """
 
-    def __init__(self, xy: tuple[int, int]):
+    def __init__(self, xy: tuple[int, int], size: tuple[int, int]):
         """
         ブロックをSurfaceを生成
         引数: xy ブロックを配置する座標タプル
         """
         super().__init__()
-        self.image = pg.Surface((10, 10))
-        pg.draw.rect(self.image, (255, 0, 0), (0, 0, 10, 10))
+        self.image = pg.Surface(size)
+        pg.draw.rect(self.image, (255, 0, 0), (0, 0, size[0], size[1]))
+        self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
-        self.rect.center = xy 
+        
+        self.rect.center = xy
 
-    def update(self, screen: pg.Surface):
-        screen.blit(self.image, self.rect)
+    def update(self):
+        pass
 
 
 # class Explosion(pg.sprite.Sprite):
@@ -158,9 +204,29 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
 
-    bird = Bird(3, (900, 400))
-    block = pg.sprite.Group()
+    bird = Bird(3, (50, 550))
+    lock_block = pg.sprite.Group()
     # exps = pg.sprite.Group()
+
+                                            # ここが中心
+    stage = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+             [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
+             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
+             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1],]
+
+    for i in range(len(stage)):
+        for j in range(len(stage[i])):
+            if stage[i][j] == 1:
+                lock_block.add(Stumbling_lock_block((25 + j*50, 25 + i*50), (50, 50)))
 
     tmr = 0
     clock = pg.time.Clock()
@@ -171,8 +237,11 @@ def main():
                 return 0
         screen.blit(bg_img, [0, 0])
 
-        block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
-
+        if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0:
+            bird.change_explosion(8, screen, 50) # こうかとん悲しみエフェクト
+            pg.display.update()
+            time.sleep(2)
+            return
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -199,8 +268,7 @@ def main():
         #     return
 
         bird.update(key_lst, screen)
-        block.update(screen)
-        block.draw(screen)
+        lock_block.draw(screen)
         # exps.update()
         # exps.draw(screen)
         pg.display.update()
