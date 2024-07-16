@@ -128,6 +128,7 @@ class Stumbling_block(pg.sprite.Sprite):
 class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
+    引数：画像をゲーム画面に表示する基底クラス
     """
     imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)]
 
