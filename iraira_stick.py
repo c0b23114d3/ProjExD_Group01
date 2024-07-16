@@ -339,9 +339,6 @@ def main():
     clock = pg.time.Clock()
     # game_now = True
 
-    # burnar_interval = 50  # バーナーが出現するまでの時間
-    # burnar_time = 50  # バーナーを出現させる時間
-
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -349,17 +346,17 @@ def main():
                 return 0
         screen.blit(bg_img, [0, 0])
 
-        if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0:
-            bird.change_explosion(8, screen, 50) # こうかとん悲しみエフェクト
-            pg.display.update()
-            time.sleep(2)
-            return
+        # if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0:
+        #     bird.change_explosion(8, screen, 50)
+        #     pg.display.update()
+        #     time.sleep(2)
+        #     return
         
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
         for emys in pg.sprite.spritecollide(bird, emys, True):
-            bird.change_img(8, screen) #こうかとん悲しみエフェクト
+            bird.change_explosion(8, screen, 50) #こうかとんを爆発エフェクトに変更
             pg.display.update()
             time.sleep(2)
             return
@@ -375,31 +372,13 @@ def main():
             time.sleep(2)
             return
         
-        # if burnar_interval < 0:
-        #     """
-        #     bunar_intervalが0未満の場合に衝突判定をする
-        #     """
-        #     if len(pg.sprite.spritecollide(bird, gimmicks_bm, True)) != 0:
-        #         bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
-        #         pg.display.update()
-        #         time.sleep(2)
-        #         return
-
-        # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
-        #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
-        #     score.value += 10  # 10点アップ
-        #     bird.change_img(6, screen)  # こうかとん喜びエフェクト
-
-        # for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
-        #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-        #     score.value += 1  # 1点アップ
 
         if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0: # 失敗時
-            bird.change_img(8, screen)
+            bird.change_explosion(8, screen, 50)
             pg.display.update()
             time.sleep(1)
             imgfail = pg.image.load(f"fig/gameover.jpg")
-            screen.blit(imgfail, [400, 200])
+            screen.blit(imgfail, [WIDTH/2, HEIGHT/2])
             pg.display.update()
             time.sleep(2)
             return
