@@ -139,6 +139,7 @@ class Bird(pg.sprite.Sprite):
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+                
         self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
@@ -170,6 +171,25 @@ class Stumbling_lock_block(pg.sprite.Sprite):
         pass
 
 
+class Enemy(pg.sprite.Sprite):
+    """
+    敵機に関するクラス
+    引数：画像をゲーム画面に表示する基底クラス
+    """
+    imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)]
+
+    def __init__(self):
+        super().__init__()
+        self.image = random.choice(__class__.imgs)
+        self.rect = self.image.get_rect()
+        self.rect.center = random.randint(WIDTH + 20, WIDTH + 100), random.randint(0, HEIGHT)
+            
+        self.speed = random.randint(3, 10)
+    
+    def update(self):
+        self.rect.move_ip(-self.speed, 0)
+        if self.rect.right < 0:
+            self.kill()
 # class Explosion(pg.sprite.Sprite):
 #     """
 #     爆発に関するクラス
@@ -206,6 +226,7 @@ def main():
 
     bird = Bird(3, (50, 550))
     lock_block = pg.sprite.Group()
+    emys = pg.sprite.Group()
     # exps = pg.sprite.Group()
 
                                             # ここが中心
@@ -228,6 +249,7 @@ def main():
             if stage[i][j] == 1:
                 lock_block.add(Stumbling_lock_block((25 + j*50, 25 + i*50), (50, 50)))
 
+    # exps = pg.sprite.Group()
     tmr = 0
     clock = pg.time.Clock()
     # game_now = True
@@ -243,6 +265,18 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
+        block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
+
+        for emys in pg.sprite.spritecollide(bird, emys, True):
+
+            bird.change_img(8, screen) #こうかとん悲しみエフェクト
+            pg.display.update()
+            time.sleep(2)
+            return
+
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -274,6 +308,8 @@ def main():
 
         bird.update(key_lst, screen)
         lock_block.draw(screen)
+        emys.update()
+        emys.draw(screen)
         # exps.update()
         # exps.draw(screen)
         pg.display.update()
