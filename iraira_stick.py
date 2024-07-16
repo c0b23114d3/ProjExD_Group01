@@ -163,7 +163,7 @@ def main():
 
     tmr = 0
     clock = pg.time.Clock()
-    game_now = True
+    # game_now = True
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -173,12 +173,12 @@ def main():
 
         block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
 
-        if len(pg.sprite.spritecollide(bird, block, True)) != 0:#失敗時
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            pg.display.update()
-            time.sleep(2)
-            game_now = False
-            return
+        # if len(pg.sprite.spritecollide(bird, block, True)) != 0:#失敗時
+        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
+        #     pg.display.update()
+        #     time.sleep(2)
+        #     game_now = False
+        #     return
         
 
 
@@ -191,10 +191,22 @@ def main():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
 
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
+        if len(pg.sprite.spritecollide(bird, block, True)) != 0: # 失敗時
+            bird.change_img(8, screen)
+            pg.display.update()
+            time.sleep(1)
+            imgfail = pg.image.load(f"fig/gameover.jpg")
+            screen.blit(imgfail, [400, 200])
+            pg.display.update()
+            time.sleep(2)
+            return
+        
+        # if len(pg.sprite.spritecollide(bird, item, True)) != 0: # クリア時
+        #     bird.change_img(9, screen)
         #     pg.display.update()
+        #     time.sleep(1)
+        #     imgclear = pg.image.load(f"fig/clear.jpg")
+        #     screen.blit(imgclear, [400, 200])
         #     time.sleep(2)
         #     return
 
