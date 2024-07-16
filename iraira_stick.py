@@ -17,6 +17,41 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 titel_screen = pg.display.set_mode((WIDTH,HEIGHT))
 pg.display.set_caption("イライラスティック")
 
+title_font = pg.font.SysFont(None,64) #タイトルのフォントサイズ
+text_font = pg.font.SysFont(None,36)  #システムのフォントサイズ
+
+title_text = title_font.render("iraira stick",True, (255,255,255)) #タイトルのテキスト
+start_text = text_font.render('Enter start' ,True,(255,255,255))   #始める時のテキスト
+end_text = text_font.render('Esc end',True,(255,255,255))          #終わるときのテキスト
+
+#タイトル画面のループ
+start = True
+while start:
+    for botan in pg.event.get():
+        if botan.type == pg.QUIT:
+            pg.quit()
+            sys.exit()
+        elif botan.type == pg.KEYDOWN:
+            if botan.key == pg.K_RETURN:#enterでゲーム開始
+                start = False
+            elif botan.key == pg.K_ESCAPE:#escでゲーム終了
+                pg.quit()
+                sys.exit()
+    
+    titel_screen.fill((101,187,233))#タイトルの背景の色
+    titel_screen.blit(title_text,(WIDTH//2 - title_text.get_width()//2,100))#タイトルの描写
+    titel_screen.blit(start_text,(WIDTH//2 - start_text.get_width()//2,300))#始める時のテキストの描写
+    titel_screen.blit(end_text,(WIDTH//2 - end_text.get_width()//2,350))    #終わる時のテキストの描写
+    pg.display.flip()#画面の更新
+
+
+
+    
+
+
+
+
+
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
