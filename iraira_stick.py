@@ -183,10 +183,18 @@ def main():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
 
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
+        # if len(pg.sprite.spritecollide(bird, block, True)) != 0:
+        #     bird.change_img(8, screen) # gameover時
         #     pg.display.update()
+        #     time.sleep(1)
+
+        #     time.sleep(2)
+        #     return
+        # if len(pg.sprite.spritecollide(bird, item, True)) == 0:
+        #     bird.change_img(9, screen) # clear時
+        #     pg.display.update()
+        #     time.sleep(1)
+
         #     time.sleep(2)
         #     return
 
