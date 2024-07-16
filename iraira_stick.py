@@ -164,23 +164,24 @@ class Gimmick_burnar_main(pg.sprite.Sprite):
     バーナーを生成するクラス
     """
 
-    def __init__(self, z: int, xy: tuple[int, int]):
+    def __init__(self, direct: int, xy: tuple[int, int], life: int):
         super().__init__()
         self.img = pg.image.load(f"fig/beam.png")
         self.size = 1.5
-        if z == 0:
+        self.life = life
+        if direct == 0:
             self.image = pg.transform.rotozoom(self.img, -90, self.size)
             # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
             # 上方向の描画
-        elif z == 1:
+        elif direct == 1:
             self.image = pg.transform.rotozoom(self.img, 0, self.size)
             # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
             # 左方向の描画
-        elif z == 2:
+        elif direct == 2:
             self.image = pg.transform.rotozoom(self.img, 90, self.size)
             # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
             # 下方向の描画
-        elif z == 3:
+        elif direct == 3:
             self.image = pg.transform.rotozoom(self.img, 180, self.size)
             # gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3)))
             # 右方向の描画
@@ -188,8 +189,10 @@ class Gimmick_burnar_main(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
 
-    def update(self, screen: pg.Surface):
-        screen.blit(self.image, self.rect)
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
 # class Explosion(pg.sprite.Sprite):
 #     """
@@ -237,8 +240,8 @@ def main():
     tmr = 0
     clock = pg.time.Clock()
 
-    burnar_interval = 50  # バーナーが出現するまでの時間
-    burnar_time = 50  # バーナーを出現させる時間
+    # burnar_interval = 50  # バーナーが出現するまでの時間
+    # burnar_time = 50  # バーナーを出現させる時間
 
     while True:
         key_lst = pg.key.get_pressed()
@@ -255,7 +258,8 @@ def main():
         # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
         # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
         # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
-        gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3)))        
+        if tmr % 150 == 0:
+            gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3), 50))        
 
         if len(pg.sprite.spritecollide(bird, gimmicks_ex, True)) != 0:
             bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
@@ -263,15 +267,15 @@ def main():
             time.sleep(2)
             return
         
-        if burnar_interval < 0:
-            """
-            bunar_intervalが0未満の場合に衝突判定をする
-            """
-            if len(pg.sprite.spritecollide(bird, gimmicks_bm, True)) != 0:
-                bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
-                pg.display.update()
-                time.sleep(2)
-                return
+        # if burnar_interval < 0:
+        #     """
+        #     bunar_intervalが0未満の場合に衝突判定をする
+        #     """
+        #     if len(pg.sprite.spritecollide(bird, gimmicks_bm, True)) != 0:
+        #         bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
+        #         pg.display.update()
+        #         time.sleep(2)
+        #         return
 
         # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
         #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -298,15 +302,17 @@ def main():
         gimmicks_bb.update(screen)
         gimmicks_bb.draw(screen)
         
-        burnar_interval -= 1
-        if burnar_interval < 0: 
-            gimmicks_bm.update(screen)
-            gimmicks_bm.draw(screen)
-            burnar_time -= 1
-            if burnar_time <= 0:
-                burnar_interval = random.randint(30, 50)
-                burnar_time = random.randint(30, 50)
-                continue
+        gimmicks_bm.update()
+        gimmicks_bm.draw(screen)
+        # burnar_interval -= 1
+        # if burnar_interval < 0: 
+        #     gimmicks_bm.update(screen)
+        #     gimmicks_bm.draw(screen)
+        #     burnar_time -= 1
+        #     if burnar_time <= 0:
+        #         burnar_interval = random.randint(30, 50)
+        #         burnar_time = random.randint(30, 50)
+        #         continue
 
         # exps.update()
         # exps.draw(screen)
