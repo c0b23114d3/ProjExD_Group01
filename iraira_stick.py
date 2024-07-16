@@ -7,6 +7,7 @@ import sys
 import time
 import pygame as pg
 
+pg.init()
 
 
 WIDTH = 1100  # ゲームウィンドウの幅
@@ -166,7 +167,6 @@ class Stumbling_lock_block(pg.sprite.Sprite):
         pg.draw.rect(self.image, (255, 0, 0), (0, 0, size[0], size[1]))
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
-        
         self.rect.center = xy
 
     def update(self):
@@ -176,7 +176,6 @@ class Gimmick_explosion(pg.sprite.Sprite):
     """
     地雷を生成するクラス
     """
-
     def __init__(self, xy: tuple[int, int]):
         super().__init__()
         self.image = pg.Surface((50, 50))
@@ -184,14 +183,13 @@ class Gimmick_explosion(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
 
-    def update(self, screen: pg.Surface):
-        screen.blit(self.image, self.rect)
+    def update(self):
+        pass
 
 class Gimmick_burnar_base(pg.sprite.Sprite):
     """
     バーナーを設置するための土台を生成するクラス    
     """
-
     def __init__(self, xy: tuple[int, int]):
         super().__init__()
         self.image = pg.Surface((50, 50))
@@ -199,39 +197,50 @@ class Gimmick_burnar_base(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
     
-    def update(self, screen: pg.Surface):
-        screen.blit(self.image, self.rect)
+    def update(self):
+        pass
 
 class Gimmick_burnar_main(pg.sprite.Sprite):
     """
     バーナーを生成するクラス
     """
 
-    def __init__(self, direct: int, xy: tuple[int, int], life: int):
+    def __init__(self, direct: int, gimmick_block: Gimmick_burnar_base, life: int):
         super().__init__()
-        self.img = pg.image.load(f"fig/beam.png")
         self.size = 1.5
         self.life = life
+        self.img = pg.image.load(f"fig/beam.png")
+        burnarx = 0
+        burnary = 0
+
+        
+        # 上方向の描画
         if direct == 0:
             self.image = pg.transform.rotozoom(self.img, -90, self.size)
-            # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
-            # 上方向の描画
+            self.rect = self.image.get_rect()
+            burnary -= self.rect.height / 2
+            
+        # 左方向の描画
         elif direct == 1:
             self.image = pg.transform.rotozoom(self.img, 0, self.size)
-            # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
-            # 左方向の描画
+            self.rect = self.image.get_rect()
+            burnarx -= self.rect.width / 2
+            
+        # 下方向の描画
         elif direct == 2:
             self.image = pg.transform.rotozoom(self.img, 90, self.size)
-            # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
-            # 下方向の描画
+            self.rect = self.image.get_rect()
+            burnary += self.rect.height / 2
+        
+        # 右方向の描画
         elif direct == 3:
             self.image = pg.transform.rotozoom(self.img, 180, self.size)
-            # gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3)))
-            # 右方向の描画
-        
-        self.rect = self.image.get_rect()
-        self.rect.center = xy
+            self.rect = self.image.get_rect()
+            burnarx += self.rect.width / 2
 
+        self.rect.centerx = gimmick_block.rect.centerx + burnarx
+        self.rect.centery = gimmick_block.rect.centery + burnary
+        
     def update(self):
         self.life -= 1
         if self.life < 0:
@@ -256,6 +265,7 @@ class Enemy(pg.sprite.Sprite):
         self.rect.move_ip(-self.speed, 0)
         if self.rect.right < 0:
             self.kill()
+
 # class Explosion(pg.sprite.Sprite):
 #     """
 #     爆発に関するクラス
@@ -293,8 +303,6 @@ def main():
     bird = Bird(3, (50, 550))
     lock_block = pg.sprite.Group()
     emys = pg.sprite.Group()
-    # bird = Bird(3, (900, 400))
-    # block = pg.sprite.Group()
 
     gimmicks_ex = pg.sprite.Group()
     gimmicks_bb = pg.sprite.Group()
@@ -304,23 +312,27 @@ def main():
 
                                             # ここが中心
     stage = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-             [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
-             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1],
-             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-             [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 2, 0, 1],
+             [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
+             [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 2, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1],
+             [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
+             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1],
              [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1],]
 
     for i in range(len(stage)):
         for j in range(len(stage[i])):
             if stage[i][j] == 1:
                 lock_block.add(Stumbling_lock_block((25 + j*50, 25 + i*50), (50, 50)))
+            elif stage[i][j] == 2:
+                gimmicks_ex.add(Gimmick_explosion((25 + j*50, 25 + i*50)))
+            elif stage[i][j] == 3:
+                gimmicks_bb.add(Gimmick_burnar_base((25 + j*50, 25 + i*50)))
 
     # exps = pg.sprite.Group()
     tmr = 0
@@ -345,23 +357,17 @@ def main():
         
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
-        block.add(Stumbling_block((WIDTH / 2, HEIGHT / 2)))
 
         for emys in pg.sprite.spritecollide(bird, emys, True):
-
             bird.change_img(8, screen) #こうかとん悲しみエフェクト
             pg.display.update()
             time.sleep(2)
             return
 
-        gimmicks_ex.add(Gimmick_explosion((WIDTH / 2, HEIGHT / 2)))
-        gimmicks_bb.add(Gimmick_burnar_base((WIDTH / 3, HEIGHT / 3)))
-
-        # gimmicks_bm.add(Gimmick_burnar_main(0, (WIDTH / 3 , HEIGHT / 3 -50)))
-        # gimmicks_bm.add(Gimmick_burnar_main(1, (WIDTH / 3 -50, HEIGHT / 3)))
-        # gimmicks_bm.add(Gimmick_burnar_main(2, (WIDTH / 3, HEIGHT / 3 +50)))
+        # 150フレームに1回バーナーを出現させる
         if tmr % 150 == 0:
-            gimmicks_bm.add(Gimmick_burnar_main(3, (WIDTH / 3 +50, HEIGHT / 3), 50))        
+            for burnar in gimmicks_bb:
+                gimmicks_bm.add(Gimmick_burnar_main(1, burnar, 50))        
 
         if len(pg.sprite.spritecollide(bird, gimmicks_ex, True)) != 0:
             bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
@@ -388,7 +394,7 @@ def main():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
 
-        if len(pg.sprite.spritecollide(bird, block, True)) != 0: # 失敗時
+        if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0: # 失敗時
             bird.change_img(8, screen)
             pg.display.update()
             time.sleep(1)
@@ -398,39 +404,24 @@ def main():
             time.sleep(2)
             return
         
-        if len(pg.sprite.spritecollide(bird, item, True)) != 0: # クリア時
-            bird.change_img(9, screen)
-            pg.display.update()
-            time.sleep(1)
-            imgclear = pg.image.load(f"fig/clear.jpg")
-            screen.blit(imgclear, [400, 200])
-            time.sleep(2)
-            return
+        # if len(pg.sprite.spritecollide(bird, item, True)) != 0: # クリア時
+        #     bird.change_img(9, screen)
+        #     pg.display.update()
+        #     time.sleep(1)
+        #     imgclear = pg.image.load(f"fig/clear.jpg")
+        #     screen.blit(imgclear, [400, 200])
+        #     time.sleep(2)
+        #     return
 
         bird.update(key_lst, screen)
         lock_block.draw(screen)
         emys.update()
         emys.draw(screen)
-        block.update(screen)
-        block.draw(screen)
-
-        gimmicks_ex.update(screen)
         gimmicks_ex.draw(screen)
-        gimmicks_bb.update(screen)
         gimmicks_bb.draw(screen)
         
         gimmicks_bm.update()
         gimmicks_bm.draw(screen)
-        # burnar_interval -= 1
-        # if burnar_interval < 0: 
-        #     gimmicks_bm.update(screen)
-        #     gimmicks_bm.draw(screen)
-        #     burnar_time -= 1
-        #     if burnar_time <= 0:
-        #         burnar_interval = random.randint(30, 50)
-        #         burnar_time = random.randint(30, 50)
-        #         continue
-
         # exps.update()
         # exps.draw(screen)
         pg.display.update()
