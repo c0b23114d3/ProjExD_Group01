@@ -8,9 +8,14 @@ import time
 import pygame as pg
 
 
+
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+titel_screen = pg.display.set_mode((WIDTH,HEIGHT))
+pg.display.set_caption("イライラスティック")
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
