@@ -46,14 +46,6 @@ while start:
     pg.display.flip()#画面の更新
 
 
-
-    
-
-
-
-
-
-
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
     オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
@@ -91,6 +83,9 @@ class Bird(pg.sprite.Sprite):
         pg.K_RIGHT: (+1, 0),
     }
 
+    state = "normal"
+    hyper_life = 0
+
     def __init__(self, num: int, xy: tuple[int, int]):
         """
         こうかとん画像Surfaceを生成する
@@ -122,7 +117,7 @@ class Bird(pg.sprite.Sprite):
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.5)
         screen.blit(self.image, self.rect)
 
     def change_explosion(self, num: int, screen: pg.Surface, life: int):
@@ -137,6 +132,7 @@ class Bird(pg.sprite.Sprite):
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -149,6 +145,17 @@ class Bird(pg.sprite.Sprite):
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
+
+        # # こうかとんの巨大化
+        # if self.state == "hyper":
+        #     self.hyper_life += -1
+        #     self.image = pg.transform.rotozoom(self.imgs[self.dire], 1.0, 1.5)
+        #     self.rect = self.image.get_rect(center=self.rect.center)
+        #     if self.hyper_life < 0:
+        #         self.state = "normal"
+        #         self.image = self.imgs[self.dire]
+        #         self.rect = self.image.get_rect(center=self.rect.center)
+
         screen.blit(self.image, self.rect)
 
 
@@ -190,12 +197,16 @@ class Gimmick_burnar_base(pg.sprite.Sprite):
     """
     バーナーを設置するための土台を生成するクラス    
     """
-    def __init__(self, xy: tuple[int, int]):
+    def __init__(self, xy: tuple[int, int], direct: int):
         super().__init__()
         self.image = pg.Surface((50, 50))
         pg.draw.circle(self.image, (0, 0, 255), (25, 25), 20)
         self.rect = self.image.get_rect()
         self.rect.center = xy
+        self.direct = direct
+
+    def get_direct(self):
+        return self.direct
     
     def update(self):
         pass
@@ -213,27 +224,26 @@ class Gimmick_burnar_main(pg.sprite.Sprite):
         burnarx = 0
         burnary = 0
 
-        
         # 上方向の描画
-        if direct == 0:
+        if direct % 4 == 0:
             self.image = pg.transform.rotozoom(self.img, -90, self.size)
             self.rect = self.image.get_rect()
             burnary -= self.rect.height / 2
             
         # 左方向の描画
-        elif direct == 1:
+        elif direct % 4 == 1:
             self.image = pg.transform.rotozoom(self.img, 0, self.size)
             self.rect = self.image.get_rect()
             burnarx -= self.rect.width / 2
             
         # 下方向の描画
-        elif direct == 2:
+        elif direct % 4 == 2:
             self.image = pg.transform.rotozoom(self.img, 90, self.size)
             self.rect = self.image.get_rect()
             burnary += self.rect.height / 2
         
         # 右方向の描画
-        elif direct == 3:
+        elif direct % 4 == 3:
             self.image = pg.transform.rotozoom(self.img, 180, self.size)
             self.rect = self.image.get_rect()
             burnarx += self.rect.width / 2
@@ -258,7 +268,6 @@ class Enemy(pg.sprite.Sprite):
         self.image = random.choice(__class__.imgs)
         self.rect = self.image.get_rect()
         self.rect.center = random.randint(WIDTH + 20, WIDTH + 100), random.randint(0, HEIGHT)
-            
         self.speed = random.randint(3, 10)
     
     def update(self):
@@ -266,78 +275,137 @@ class Enemy(pg.sprite.Sprite):
         if self.rect.right < 0:
             self.kill()
 
-# class Explosion(pg.sprite.Sprite):
-#     """
-#     爆発に関するクラス
-#     """
-#     def __init__(self, obj: "Bomb|Enemy", life: int):
-#         """
-#         爆弾が爆発するエフェクトを生成する
-#         引数1 obj：爆発するBombまたは敵機インスタンス
-#         引数2 life：爆発時間
-#         """
-#         super().__init__()
-#         img = pg.image.load(f"fig/explosion.gif")
-#         self.imgs = [img, pg.transform.flip(img, 1, 1)]
-#         self.image = self.imgs[0]
-#         self.rect = self.image.get_rect(center=obj.rect.center)
-#         self.life = life
 
-#     def update(self):
-#         """
-#         爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
-#         爆発エフェクトを表現する
-#         """
-#         self.life -= 1
-#         self.image = self.imgs[self.life//10%2]
-#         if self.life < 0:
-#             self.kill()
+class Explosion(pg.sprite.Sprite):
+    """
+    爆発に関するクラス
+    """
+    def __init__(self, obj: Enemy, life: int):
+        """
+        爆弾が爆発するエフェクトを生成する
+        引数1 obj：爆発するBombまたは敵機インスタンス
+        引数2 life：爆発時間
+        """
+        super().__init__()
+        img = pg.image.load(f"fig/explosion.gif")
+        self.imgs = [img, pg.transform.flip(img, 1, 1)]
+        self.image = self.imgs[0]
+        self.rect = self.image.get_rect(center=obj.rect.center)
+        self.life = life
 
+    def update(self):
+        """
+        爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
+        爆発エフェクトを表現する
+        """
+        self.life -= 1
+        self.image = self.imgs[self.life//10%2]
+        if self.life < 0:
+            self.kill()
+            self.game_over = True
+
+
+class Fruit(pg.sprite.Sprite):
+    """
+    フルーツを生成するクラス
+    """
+    def __init__(self, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/fruit_ringo.png"), 0, 0.13)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self):
+        pass
+
+
+class FakeFruit(pg.sprite.Sprite):
+    """
+    ニセモノのフルーツを生成するクラス
+    """
+    def __init__(self, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/fruit_apple_yellow.png"), 0, 0.3)
+        self.image = pg.transform.flip(self.image, True, False)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self):
+        pass
+
+
+class SpecialFruit(pg.sprite.Sprite):
+    """
+    クリア条件を満たす特別なフルーツを生成するクラス
+    """
+    def __init__(self, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/fruit_apple_yellow.png"), 0, 0.3)
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+
+    def update(self):
+        pass
 
 
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
-
-    bird = Bird(3, (50, 550))
-    lock_block = pg.sprite.Group()
-    emys = pg.sprite.Group()
-
+    bird   = Bird(3, (50, 550))
+    emys   = pg.sprite.Group()
+    exps   = pg.sprite.Group()
+    lock_block  = pg.sprite.Group()
     gimmicks_ex = pg.sprite.Group()
     gimmicks_bb = pg.sprite.Group()
     gimmicks_bm = pg.sprite.Group()
-
-    # exps = pg.sprite.Group()
+    fruit      = pg.sprite.Group()
+    fake_fruit = pg.sprite.Group()
+    sp_fruit   = pg.sprite.Group()
+    clock = pg.time.Clock()
+    tmr = 0
+    get_fruits = 0
+    game_over = False
 
                                             # ここが中心
-    stage = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-             [1, 0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 1],
-             [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 2, 0, 1],
+    stage = [[1, 1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+             [1, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 0, 1],
+             [1, 0, 0, 9, 1, 1, 6, 1, 1, 1, 7, 0, 0, 5, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 8, 0, 1],
              [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
+             [1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
              [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 2, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1],
-             [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
-             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1],]
+             [1, 0, 0, 0, 0, 0, 0, 1, 6, 0, 0, 5, 1, 1, 1, 1, 1, 5, 0, 0, 0, 1],
+             [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9, 1],
+             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 1],
+             [0, 0, 0, 2, 1, 0, 0, 5, 5, 0, 0, 2, 9, 0, 0, 0, 0, 0, 0, 2, 0, 1],
+             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1, 1],]
+    size = 50
 
     for i in range(len(stage)):
         for j in range(len(stage[i])):
+            xy = (size/2 + j*size, size/2 + i*size)
+            # ステージを構成するブロックの描画
             if stage[i][j] == 1:
-                lock_block.add(Stumbling_lock_block((25 + j*50, 25 + i*50), (50, 50)))
+                lock_block.add(Stumbling_lock_block(xy, (size, size)))
+            # フルーツの描画
             elif stage[i][j] == 2:
-                gimmicks_ex.add(Gimmick_explosion((25 + j*50, 25 + i*50)))
+                fruit.add(Fruit(xy))
+            # ニセモノのフルーツの描画
             elif stage[i][j] == 3:
-                gimmicks_bb.add(Gimmick_burnar_base((25 + j*50, 25 + i*50)))
-
-    # exps = pg.sprite.Group()
-    tmr = 0
-    clock = pg.time.Clock()
-    # game_now = True
+                fake_fruit.add(FakeFruit(xy))
+            # クリア条件を満たすフルーツの座標を設定
+            elif stage[i][j] == 4:
+                sp_fruit_xy = xy
+            # 地雷ブロックの描画
+            elif stage[i][j] == 5:
+                gimmicks_ex.add(Gimmick_explosion(xy))
+            # バーナーブロックの描画
+            elif 6 <= stage[i][j]:
+                gimmicks_bb.add(Gimmick_burnar_base(xy, stage[i][j]))
+            
+    
 
     while True:
         key_lst = pg.key.get_pressed()
@@ -346,63 +414,92 @@ def main():
                 return 0
         screen.blit(bg_img, [0, 0])
 
-        # if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0:
-        #     bird.change_explosion(8, screen, 50)
-        #     pg.display.update()
-        #     time.sleep(2)
-        #     return
-        
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
-
-        for emys in pg.sprite.spritecollide(bird, emys, True):
-            bird.change_explosion(8, screen, 50) #こうかとんを爆発エフェクトに変更
-            pg.display.update()
-            time.sleep(2)
-            return
-
         # 150フレームに1回バーナーを出現させる
         if tmr % 150 == 0:
             for burnar in gimmicks_bb:
-                gimmicks_bm.add(Gimmick_burnar_main(1, burnar, 50))        
-
-        if len(pg.sprite.spritecollide(bird, gimmicks_ex, True)) != 0:
-            bird.change_explosion(8, screen, 50) # こうかとんを爆発エフェクトに変更
-            pg.display.update()
-            time.sleep(2)
-            return
+                gimmicks_bm.add(Gimmick_burnar_main(burnar.get_direct(), burnar, 50))
         
+        # 200フレームに1回，敵機を出現させる
+        if tmr%200 == 0:
+            emys.add(Enemy())
 
-        if len(pg.sprite.spritecollide(bird, lock_block, True)) != 0: # 失敗時
-            bird.change_explosion(8, screen, 50)
+        # こうかとんが壁にぶつかったとき
+        if get_fruits < 3 and len(pg.sprite.spritecollide(bird, lock_block, True)) != 0:
+            game_over = True
+
+        # こうかとんが敵機とぶつかったとき
+        for emys in pg.sprite.spritecollide(bird, emys, True):
+            game_over = True
+
+        # こうかとんが地雷ブロックにぶつかったとき
+        if len(pg.sprite.spritecollide(bird, gimmicks_ex, True)) != 0:
+            game_over = True
+
+        # こうかとんがバーナーブロックにぶつかったとき
+        if len(pg.sprite.spritecollide(bird, gimmicks_bb, True)) != 0:
+            game_over = True
+
+        # こうかとんがバーナーにぶつかったとき
+        if len(pg.sprite.spritecollide(bird, gimmicks_bm, True)) != 0:
+            game_over = True
+
+        # こうかとんがフルーツをとったとき
+        if len(pg.sprite.spritecollide(bird, fruit, True)) != 0:
+            get_fruits += 1
+
+        
+        # こうかとんがフルーツを3つ以上とったとき
+        # if get_fruits >= 3:
+        #     bird.state = "hyper"
+        #     bird.hyper_life = 10
+        #     if len(pg.sprite.spritecollide(bird, lock_block, True)):
+        #         exps.add(Explosion(bird, 50))
+
+        if len(pg.sprite.spritecollide(bird, fake_fruit, True)):
+            sp_fruit.add(SpecialFruit(sp_fruit_xy))
+            
+
+        # ゲームオーバー画面の処理
+        if game_over:
+            bird.change_explosion(8, screen, 50)    # こうかとんを爆発エフェクトに変更
+            exps.add(Explosion(bird, 50))
             pg.display.update()
             time.sleep(1)
-            imgfail = pg.image.load(f"fig/gameover.jpg")
-            screen.blit(imgfail, [WIDTH/2, HEIGHT/2])
+            imgfail = pg.transform.rotozoom(pg.image.load(f"fig/gameover.png"), 15, 2.5)
+            failrect = imgfail.get_rect()
+            failrect.center = WIDTH/2, HEIGHT/2
+            screen.blit(imgfail, failrect)
             pg.display.update()
             time.sleep(2)
             return
         
-        # if len(pg.sprite.spritecollide(bird, item, True)) != 0: # クリア時
-        #     bird.change_img(9, screen)
-        #     pg.display.update()
-        #     time.sleep(1)
-        #     imgclear = pg.image.load(f"fig/clear.jpg")
-        #     screen.blit(imgclear, [400, 200])
-        #     time.sleep(2)
-        #     return
+
+        # クリア処理
+        if len(pg.sprite.spritecollide(bird, sp_fruit, True)) != 0:
+            bird.change_img(9, screen)
+            # pg.display.update()
+            # time.sleep(1)
+            imgclear = pg.transform.rotozoom(pg.image.load(f"fig/gameclear.png"), 0, 2.5)
+            clrect = imgclear.get_rect()
+            clrect.center = WIDTH/2, HEIGHT/2
+            screen.blit(imgclear, clrect)
+            pg.display.update()
+            time.sleep(2)
+            return
 
         bird.update(key_lst, screen)
         lock_block.draw(screen)
-        emys.update()
-        emys.draw(screen)
         gimmicks_ex.draw(screen)
         gimmicks_bb.draw(screen)
-        
         gimmicks_bm.update()
         gimmicks_bm.draw(screen)
-        # exps.update()
-        # exps.draw(screen)
+        fruit.draw(screen)
+        fake_fruit.draw(screen)
+        sp_fruit.draw(screen)
+        emys.update()
+        emys.draw(screen)
+        exps.update()
+        exps.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
