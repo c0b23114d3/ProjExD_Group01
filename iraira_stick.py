@@ -364,21 +364,24 @@ def main():
     sp_fruit   = pg.sprite.Group()
     clock = pg.time.Clock()
     tmr = 0
-    get_fruits = 0
     game_over = False
+    get_fruits = 0
+    get_fake_fruits = 0
+    apples = []
+    fake_fruits = []
 
                                             # ここが中心
     stage = [[1, 1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
              [1, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-             [1, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 0, 1],
-             [1, 0, 0, 9, 1, 1, 6, 1, 1, 1, 7, 0, 0, 5, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+             [1, 0, 0, 9, 1, 1, 6, 1, 1, 1, 7, 0, 0, 5, 0, 0, 1, 0, 0, 3, 0, 1],
              [1, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 8, 0, 1],
              [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
+             [1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],  # ここが中心
              [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
              [1, 0, 0, 0, 0, 0, 0, 1, 6, 0, 0, 5, 1, 1, 1, 1, 1, 5, 0, 0, 0, 1],
              [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9, 1],
-             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 1],
+             [0, 0, 4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0, 0, 0, 0, 0, 1],
              [0, 0, 0, 2, 1, 0, 0, 5, 5, 0, 0, 2, 9, 0, 0, 0, 0, 0, 0, 2, 0, 1],
              [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1, 1],]
     size = 50
@@ -389,12 +392,12 @@ def main():
             # ステージを構成するブロックの描画
             if stage[i][j] == 1:
                 lock_block.add(Stumbling_lock_block(xy, (size, size)))
-            # フルーツの描画
+            # フルーツを描画する座標をリストに保存
             elif stage[i][j] == 2:
-                fruit.add(Fruit(xy))
-            # ニセモノのフルーツの描画
+                apples.append((xy))
+            # ニセモノのフルーツを描画する座標をリストに保存
             elif stage[i][j] == 3:
-                fake_fruit.add(FakeFruit(xy))
+                fake_fruits.append((xy))
             # クリア条件を満たすフルーツの座標を設定
             elif stage[i][j] == 4:
                 sp_fruit_xy = xy
@@ -405,6 +408,21 @@ def main():
             elif 6 <= stage[i][j]:
                 gimmicks_bb.add(Gimmick_burnar_base(xy, stage[i][j]))
             
+    # 配置したアイテムの個数をnum_appelsに保存
+    num_appels = len(apples)
+    # 配置したニセモノのフルーツの個数をnum_fake_appelsに保存
+    num_fake_apples = len(fake_fruits)
+    # アイテムリストの中身をシャッフル
+    random.shuffle(apples)
+    # ニセフルーツの中身を入れ替え
+    f_fruits = fake_fruits[2]
+    fake_fruits[2] = fake_fruits[1]
+    fake_fruits[1] = fake_fruits[0]
+    fake_fruits[0] = f_fruits
+    
+    # 最初のアイテムを配置
+    fruit.add(Fruit(apples[get_fruits]))
+    fruit.draw(screen)
     
 
     while True:
@@ -446,6 +464,10 @@ def main():
         # こうかとんがフルーツをとったとき
         if len(pg.sprite.spritecollide(bird, fruit, True)) != 0:
             get_fruits += 1
+            if get_fruits < num_appels:
+                fruit.add(Fruit(apples[get_fruits]))
+            elif get_fruits == num_appels:
+                fake_fruit.add(FakeFruit(fake_fruits[get_fake_fruits]))
 
         
         # こうかとんがフルーツを3つ以上とったとき
@@ -455,8 +477,16 @@ def main():
         #     if len(pg.sprite.spritecollide(bird, lock_block, True)):
         #         exps.add(Explosion(bird, 50))
 
+        # ニセモノのフルーツをとったとき
         if len(pg.sprite.spritecollide(bird, fake_fruit, True)):
-            sp_fruit.add(SpecialFruit(sp_fruit_xy))
+            get_fake_fruits += 1
+            # まだニセモノのフルーツが残っていれば次のニセフルーツを生成
+            if get_fake_fruits < num_fake_apples:
+                fake_fruit.add(FakeFruit(fake_fruits[get_fake_fruits]))
+            # すべてのニセフルーツをとったら
+            elif get_fake_fruits == num_fake_apples:
+                # 本物のフルーツを生成
+                sp_fruit.add(SpecialFruit(sp_fruit_xy))
             
 
         # ゲームオーバー画面の処理
