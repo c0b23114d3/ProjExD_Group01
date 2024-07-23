@@ -109,7 +109,7 @@ class Bird(pg.sprite.Sprite):
         self.image = self.imgs[self.dire]
         self.rect = self.image.get_rect()
         self.rect.center = xy
-        self.speed = 10
+        self.speed = 7
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -146,15 +146,15 @@ class Bird(pg.sprite.Sprite):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
 
-        # # こうかとんの巨大化
-        # if self.state == "hyper":
-        #     self.hyper_life += -1
-        #     self.image = pg.transform.rotozoom(self.imgs[self.dire], 1.0, 1.5)
-        #     self.rect = self.image.get_rect(center=self.rect.center)
-        #     if self.hyper_life < 0:
-        #         self.state = "normal"
-        #         self.image = self.imgs[self.dire]
-        #         self.rect = self.image.get_rect(center=self.rect.center)
+        # こうかとんの巨大化
+        if self.state == "hyper":
+            self.hyper_life += -1
+            self.image = pg.transform.rotozoom(self.imgs[self.dire], 1.0, 1.5)
+            self.rect = self.image.get_rect(center=self.rect.center)
+            if self.hyper_life < 0:
+                self.state = "normal"
+                self.image = self.imgs[self.dire]
+                self.rect = self.image.get_rect(center=self.rect.center)
 
         screen.blit(self.image, self.rect)
 
@@ -471,11 +471,11 @@ def main():
 
         
         # こうかとんがフルーツを3つ以上とったとき
-        # if get_fruits >= 3:
-        #     bird.state = "hyper"
-        #     bird.hyper_life = 10
-        #     if len(pg.sprite.spritecollide(bird, lock_block, True)):
-        #         exps.add(Explosion(bird, 50))
+        if get_fruits >= 1:
+            bird.state = "hyper"
+            bird.hyper_life = 10
+            if len(pg.sprite.spritecollide(bird, lock_block, True)):
+                exps.add(Explosion(bird, 50))
 
         # ニセモノのフルーツをとったとき
         if len(pg.sprite.spritecollide(bird, fake_fruit, True)):
